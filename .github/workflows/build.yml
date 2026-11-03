@@ -1,0 +1,43 @@
+name: build
+
+on:
+  push:
+    branches: ["main", "master"]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  arch-package:
+    name: Arch Linux x86_64 package
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:latest
+    steps:
+      - name: Install build dependencies
+        run: |
+          pacman -Syu --noconfirm --needed \
+            base-devel rust cargo pkgconf \
+            webkit2gtk-4.1 gtk3 librsvg libayatana-appindicator \
+            polkit curl git
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build pacman package
+        run: |
+          useradd -m builder
+          chown -R builder .
+          su builder -c './packaging/arch/build-local.sh'
+
+      - name: Show package contents
+        run: bsdtar -tf packaging/arch/*.pkg.tar.zst
+
+      - name: Upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: ime-theme-switcher-arch-x86_64
+          path: packaging/arch/*.pkg.tar.zst
+          if-no-files-found: error

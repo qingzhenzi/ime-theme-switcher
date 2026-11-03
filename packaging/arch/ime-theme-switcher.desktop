@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=输入法候选框样式
+Name[zh_CN]=输入法候选框样式
+Comment=切换 fcitx5 候选框主题（经典界面皮肤）
+Comment[zh_CN]=切换 fcitx5 候选框主题（经典界面皮肤）
+Exec=/usr/bin/ime-theme-switcher
+Icon=ime-theme-switcher
+Terminal=false
+Categories=Utility;
+Keywords=fcitx5;rime;theme;skin;输入法;主题;皮肤;候选框;
+StartupWMClass=ime-theme-switcher

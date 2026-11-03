@@ -1,0 +1,48 @@
+# Gitea Actions 版本（与 .github/workflows/build.yml 等价）
+#
+# 说明：Gitea 的 act_runner 需要提供一个带 Docker 的 runner，
+# 并把标签配置成 ubuntu-latest（或把下面的 runs-on 改成你自己的标签）。
+# job 内使用 archlinux:latest 容器构建「Arch Linux pacman 安装包」。
+name: build
+
+on:
+  push:
+    branches: ["main", "master"]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  arch-package:
+    name: Arch Linux x86_64 package
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:latest
+    steps:
+      - name: Install build dependencies
+        run: |
+          pacman -Syu --noconfirm --needed \
+            base-devel rust cargo pkgconf \
+            webkit2gtk-4.1 gtk3 librsvg libayatana-appindicator \
+            polkit curl git
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build pacman package
+        run: |
+          useradd -m builder
+          chown -R builder .
+          su builder -c './packaging/arch/build-local.sh'
+
+      - name: Show package contents
+        run: bsdtar -tf packaging/arch/*.pkg.tar.zst
+
+      - name: Upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: ime-theme-switcher-arch-x86_64
+          path: packaging/arch/*.pkg.tar.zst
+          if-no-files-found: error

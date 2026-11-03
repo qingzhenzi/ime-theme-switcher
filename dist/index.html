@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>输入法候选框样式</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <div class="logo">字</div>
+      <div class="titles">
+        <h1>输入法候选框样式</h1>
+        <p class="sub">fcitx5 候选框主题切换 · 体检与初始化</p>
+      </div>
+    </div>
+    <div class="actions">
+      <input id="search" class="search" type="search" placeholder="搜索主题 / 作者…" autocomplete="off" />
+      <button id="refresh" class="btn" title="重新扫描主题目录">刷新</button>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="themes">主题</button>
+    <button class="tab" data-tab="health">体检 / 初始化<span id="health-badge" class="tab-badge hidden">!</span></button>
+    <span class="spacer"></span>
+    <span class="current-chip">当前：<b id="current-name">…</b></span>
+  </nav>
+
+  <main>
+    <section id="view-themes" class="view active">
+      <div class="meta-row">
+        <span id="count" class="muted"></span>
+        <span class="muted hint">主题 = fcitx5「经典界面」皮肤，rime / 拼音通用</span>
+      </div>
+      <section id="grid" class="grid"></section>
+    </section>
+
+    <section id="view-health" class="view">
+      <div class="health-toolbar">
+        <button id="run-all" class="btn primary">一键初始化 / 修复</button>
+        <button id="recheck" class="btn">重新体检</button>
+        <label class="switch" title="开机后静默启动到托盘">
+          <input type="checkbox" id="autostart" /> 开机自启
+        </label>
+        <span class="shortcut-box">
+          <input id="shortcut-accel" class="search shortcut-input" value="Ctrl+Alt+I" />
+          <button id="register-shortcut" class="btn ghost">注册全局快捷键</button>
+        </span>
+        <span class="spacer"></span>
+        <button id="open-config" class="btn ghost">fcitx5 设置</button>
+      </div>
+
+      <div class="note">
+        仅在 <b>CachyOS（Arch 系）</b> 上测试过，其他发行版请自行确认依赖：
+        <code>webkit2gtk-4.1</code>、<code>gtk3</code>、<code>librsvg</code>、<code>libayatana-appindicator</code>。
+        Wayland 下全局快捷键通常不可用，建议在 KDE「系统设置 → 快捷键」里给本应用绑定。
+      </div>
+
+      <div id="health-list" class="health-list"></div>
+      <pre id="fix-log" class="fix-log hidden"></pre>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <span id="app-meta">v…</span>
+    <span class="foot-sep">·</span>
+    主题目录：<code>~/.local/share/fcitx5/themes</code> 与 <code>/usr/share/fcitx5/themes</code>
+    <span class="foot-sep">·</span>
+    配置写入 <code>~/.config/fcitx5/conf/classicui.conf</code>
+  </footer>
+
+  <div id="toast" class="toast"></div>
+  <script src="app.js"></script>
+</body>
+</html>
