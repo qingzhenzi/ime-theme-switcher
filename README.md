@@ -54,11 +54,19 @@ Chromium/Electron 应用走错输入法模块等）做成一键修复。
 ### 方式 1：pacman 安装包（推荐，Arch / CachyOS）
 
 ```bash
-# 本地构建（需要 base-devel、rust、webkit2gtk-4.1 等）
+# 本地构建（需要 base-devel、rust、webkit2gtk-4.1、nodejs/npm 等）
 cd ~/Projects/ime-theme-switcher
 ./packaging/arch/build-local.sh          # 产出 packaging/arch/*.pkg.tar.zst
 sudo pacman -U packaging/arch/ime-theme-switcher-*.pkg.tar.zst
 ```
+
+> 如果本机的 rust/cargo 来自 rustup 而不是 pacman 的 `rust` 包，makepkg 的依赖检查
+> 会提示缺 `rust`，可以用：
+> `MAKEPKG_ARGS="--nodeps" ./packaging/arch/build-local.sh`（CI 里是装了 pacman rust 的）。
+>
+> 已验证产物：`ime-theme-switcher-0.3.0-1-x86_64.pkg.tar.zst`（压缩约 1.9 MiB /
+> 安装后约 5.4 MiB），`pacman -Qip` 依赖为 webkit2gtk-4.1、gtk3、librsvg、
+> libayatana-appindicator、polkit、curl。
 
 安装后从应用菜单打开「输入法候选框样式」（`/usr/bin/ime-theme-switcher`）。
 
@@ -113,7 +121,8 @@ ime-theme-switcher --version
 
 ## CI（GitHub / Gitea）
 
-两套工作流内容等价，都在 `archlinux:latest` 容器里构建 pacman 包并上传 artifact：
+两套工作流内容等价，都在 `archlinux:latest` 容器里安装依赖（含 nodejs/npm、pacman `rust`），
+运行 `packaging/arch/build-local.sh` 构建 pacman 包并上传 artifact：
 
 - GitHub：[`.github/workflows/build.yml`](.github/workflows/build.yml)
 - Gitea：[`.gitea/workflows/build.yml`](.gitea/workflows/build.yml)
