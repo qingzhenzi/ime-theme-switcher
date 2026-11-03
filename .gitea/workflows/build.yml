@@ -37,8 +37,10 @@ jobs:
           chown -R builder .
           su builder -c './packaging/arch/build-local.sh'
 
-      - name: Show package contents
-        run: bsdtar -tf packaging/arch/*.pkg.tar.zst
+      - name: Show package
+        run: |
+          ls -la packaging/arch/
+          pacman -Qip packaging/arch/*.pkg.tar.zst
 
       - name: Upload package
         uses: actions/upload-artifact@v4
