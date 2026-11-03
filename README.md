@@ -91,6 +91,10 @@ sudo pacman -S base-devel rust cargo pkgconf nodejs npm
 
 ### 前端开发
 
+> `package-lock.json` 里的 `resolved` 必须指向官方 npm registry（本项目已如此）。
+> 如果本地改依赖时用了镜像，请用 `npm install --registry=https://registry.npmjs.org`
+> 重新生成 lockfile，否则 CI 里的 npm 12 会报 `EALLOWREMOTE`。
+
 ```bash
 npm install        # 安装 Vue / Vite / TypeScript 依赖
 npm run dev        # 只跑前端（浏览器里用 mock 数据调样式）

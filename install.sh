@@ -39,7 +39,7 @@ if ! command -v npm >/dev/null 2>&1; then
 fi
 
 echo "[1/5] 构建前端（npm ci && npm run build）..."
-(cd "$ROOT" && npm ci --no-audit --no-fund && npm run build)
+(cd "$ROOT" && npm ci --no-audit --no-fund --replace-registry-host=always && npm run build)
 
 echo "[2/5] 构建 Rust（cargo build --release）..."
 (cd "$ROOT/src-tauri" && cargo build --release --features custom-protocol)
