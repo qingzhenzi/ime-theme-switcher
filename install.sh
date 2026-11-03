@@ -33,13 +33,21 @@ if [[ "${1:-}" == "--uninstall" ]]; then
   exit 0
 fi
 
-echo "[1/4] 构建（cargo build --release）..."
-(cd "$ROOT/src-tauri" && cargo build --release)
+if ! command -v npm >/dev/null 2>&1; then
+  echo "需要 npm 构建 Vue 前端（Arch: sudo pacman -S nodejs npm）" >&2
+  exit 1
+fi
 
-echo "[2/4] 安装二进制：$BIN"
+echo "[1/5] 构建前端（npm ci && npm run build）..."
+(cd "$ROOT" && npm ci --no-audit --no-fund && npm run build)
+
+echo "[2/5] 构建 Rust（cargo build --release）..."
+(cd "$ROOT/src-tauri" && cargo build --release --features custom-protocol)
+
+echo "[3/5] 安装二进制：$BIN"
 install -Dm755 "$ROOT/src-tauri/target/release/$APP_ID" "$BIN"
 
-echo "[3/4] 安装图标与桌面入口"
+echo "[4/5] 安装图标与桌面入口"
 install -Dm644 "$ROOT/src-tauri/icons/128x128@2x.png" "$ICON_DIR/$APP_ID.png"
 mkdir -p "$DESKTOP_DIR"
 cat > "$DESKTOP_FILE" <<EOF
@@ -61,7 +69,7 @@ update-desktop-database "$DESKTOP_DIR" >/dev/null 2>&1 || true
 gtk-update-icon-cache -f -t "$PREFIX/share/icons/hicolor" >/dev/null 2>&1 || true
 command -v kbuildsycoca6 >/dev/null 2>&1 && kbuildsycoca6 --noincremental >/dev/null 2>&1 || true
 
-echo "[4/4] 创建桌面快捷方式"
+echo "[5/5] 创建桌面快捷方式"
 mkdir -p "$USER_DESKTOP"
 cp "$DESKTOP_FILE" "$SHORTCUT"
 chmod +x "$SHORTCUT"

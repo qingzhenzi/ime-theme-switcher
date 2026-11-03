@@ -8,7 +8,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORK="${TMPDIR:-/tmp}/ime-theme-preview"
 RAW="$WORK/raw"
-OUT="$ROOT/dist/previews"
+OUT="$ROOT/public/previews"
 DISPLAY_ID=":99"
 mkdir -p "$RAW" "$OUT" "$WORK/config" "$WORK/data/fcitx5" "$WORK/cache"
 

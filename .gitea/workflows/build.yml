@@ -22,7 +22,7 @@ jobs:
       - name: Install build dependencies
         run: |
           pacman -Syu --noconfirm --needed \
-            base-devel rust cargo pkgconf \
+            base-devel rust cargo pkgconf nodejs npm \
             webkit2gtk-4.1 gtk3 librsvg libayatana-appindicator \
             polkit curl git
 

@@ -7,7 +7,6 @@
   --muted: #8a94a6;
   --accent: #88c0d0;
   --accent-2: #39c5bb;
-  --pink: #ff6fa8;
   --ok: #a3be8c;
   --warn: #ebcb8b;
   --err: #bf616a;
@@ -31,6 +30,12 @@ body {
   min-height: 100vh;
 }
 
+#app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
 /* ---------- 顶栏 ---------- */
 .top {
   position: sticky;
@@ -40,28 +45,18 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 16px 22px 12px;
+  padding: 18px 22px 14px;
   background: var(--bg);
   border-bottom: 1px solid var(--line);
 }
 
-.brand { display: flex; align-items: center; gap: 12px; }
-
-.logo {
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
-  display: grid;
-  place-items: center;
-  font-size: 22px;
-  font-weight: 700;
-  color: #12242a;
-  background: linear-gradient(140deg, var(--accent-2), var(--accent));
-  box-shadow: 0 4px 14px rgba(57, 197, 187, 0.28);
+.titles h1 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 650;
+  letter-spacing: 0.3px;
 }
-
-.titles h1 { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: 0.2px; }
-.titles .sub { margin: 3px 0 0; font-size: 12px; color: var(--muted); }
+.titles .sub { margin: 4px 0 0; font-size: 12px; color: var(--muted); }
 
 .actions { display: flex; align-items: center; gap: 8px; }
 
@@ -99,7 +94,10 @@ body {
   color: #fff;
   font-weight: 600;
 }
-.btn.primary:hover { filter: brightness(1.08); background: linear-gradient(140deg, #2f9e95, #2b7f9e); }
+.btn.primary:hover {
+  filter: brightness(1.08);
+  background: linear-gradient(140deg, #2f9e95, #2b7f9e);
+}
 .btn:disabled { opacity: 0.5; cursor: default; }
 
 /* ---------- 标签页 ---------- */
@@ -146,15 +144,13 @@ body {
   line-height: 16px;
   text-align: center;
 }
-.tab-badge.hidden { display: none; }
 .spacer { flex: 1; }
 .current-chip { color: var(--muted); font-size: 12px; white-space: nowrap; }
 .current-chip b { color: var(--accent-2); }
 
 /* ---------- 内容 ---------- */
 main { flex: 1; padding: 16px 22px 8px; }
-.view { display: none; }
-.view.active { display: block; }
+.view { display: block; }
 
 .meta-row {
   display: flex;
@@ -216,15 +212,12 @@ main { flex: 1; padding: 16px 22px 8px; }
 }
 
 .swatch {
-  display: none;
+  display: flex;
   width: 100%;
   height: 100%;
   align-items: center;
   justify-content: center;
 }
-.preview.failed .swatch { display: flex; }
-.preview.failed img { display: none; }
-
 .swatch-pill {
   display: inline-flex;
   align-items: center;
@@ -273,7 +266,13 @@ main { flex: 1; padding: 16px 22px 8px; }
   font-weight: 700;
 }
 .badge.nopage { color: var(--warn); border-color: rgba(235, 203, 139, 0.35); }
-.author { color: var(--muted); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.author {
+  color: var(--muted);
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 /* ---------- 体检页 ---------- */
 .health-toolbar {
@@ -369,7 +368,6 @@ main { flex: 1; padding: 16px 22px 8px; }
   max-height: 260px;
   overflow: auto;
 }
-.fix-log.hidden { display: none; }
 
 /* ---------- 页脚 & toast ---------- */
 .foot {

@@ -1,19 +1,22 @@
 # Maintainer: qingzhenzi
 pkgname=ime-theme-switcher
-pkgver=0.2.0
+pkgver=0.3.0
 pkgrel=1
 pkgdesc="切换 fcitx5 候选框主题的小工具（Tauri，含体检初始化）"
 arch=('x86_64')
 url="https://github.com/qingzhenzi/ime-theme-switcher"
 license=('MIT')
 depends=('webkit2gtk-4.1' 'gtk3' 'librsvg' 'libayatana-appindicator' 'polkit' 'curl')
-makedepends=('rust' 'cargo' 'pkgconf' 'base-devel')
+makedepends=('rust' 'cargo' 'pkgconf' 'base-devel' 'nodejs' 'npm')
 source=("$pkgname-$pkgver.tar.gz")
 sha256sums=('SKIP')
 
 build() {
-  cd "$srcdir/$pkgname-$pkgver/src-tauri"
-  cargo build --release --locked
+  cd "$srcdir/$pkgname-$pkgver"
+  npm ci --no-audit --no-fund
+  npm run build
+  cd src-tauri
+  cargo build --release --locked --features custom-protocol
 }
 
 package() {

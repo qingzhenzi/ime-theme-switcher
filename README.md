@@ -1,6 +1,6 @@
 # 输入法候选框样式（ime-theme-switcher）
 
-给 fcitx5「经典界面」候选框换皮肤的 Tauri 小工具，附带一个「体检 / 初始化」页，
+给 fcitx5「经典界面」候选框换皮肤的 Tauri 小工具（前端 Vue 3 + TypeScript + Vite），附带一个「体检 / 初始化」页，
 把这次折腾 CachyOS 输入法时踩过的坑（XIM 漏字、主题没翻页按钮、主题切换不生效、
 Chromium/Electron 应用走错输入法模块等）做成一键修复。
 
@@ -75,9 +75,18 @@ cd ~/Projects/ime-theme-switcher
 ### 依赖（Arch 系）
 
 ```bash
+# 运行时
 sudo pacman -S webkit2gtk-4.1 gtk3 librsvg libayatana-appindicator polkit curl
-# 构建还需要：
-sudo pacman -S base-devel rust cargo pkgconf
+# 构建时
+sudo pacman -S base-devel rust cargo pkgconf nodejs npm
+```
+
+### 前端开发
+
+```bash
+npm install        # 安装 Vue / Vite / TypeScript 依赖
+npm run dev        # 只跑前端（浏览器里用 mock 数据调样式）
+cargo tauri dev    # 在 Tauri 窗口里联调（会自动起 vite）
 ```
 
 ## 命令行
@@ -115,8 +124,12 @@ Gitea 侧说明：需要一台带 Docker 的 act_runner，并把 runner 标签�
 ## 目录结构
 
 ```
-dist/                     前端（静态 HTML/CSS/JS，构建时嵌入二进制）
-  previews/               每个主题真实渲染的候选框截图
+src/                      Vue 3 + TypeScript 前端
+  App.vue                 主界面（主题 / 体检两个标签页）
+  api.ts                  与 Tauri 命令的类型化封装（浏览器下自动 mock）
+  components/ThemeCard.vue
+public/previews/          每个主题真实渲染的候选框截图（Vite 原样复制）
+dist/                     Vite 构建产物（不提交，构建时嵌入二进制）
 src-tauri/                Rust 后端、Tauri 配置、托盘/快捷键/体检逻辑
   themes/Hatsune_Miku_Dark/  内置的初音未来·暗色主题（离线可安装）
 tools/render-previews.sh  重新生成预览图
@@ -128,8 +141,8 @@ install.sh                用户目录安装 / 卸载
 ## 重新生成预览图
 
 ```bash
-tools/render-previews.sh   # 需要 xorg-server-xvfb、python3-gi、xdotool、ImageMagick
-./install.sh               # 或 cargo build，把新预览图嵌进程序
+tools/render-previews.sh   # 输出到 public/previews（需要 xorg-server-xvfb、python3-gi、xdotool、ImageMagick）
+npm run build && (cd src-tauri && cargo build --release --features custom-protocol)   # 或直接 ./install.sh
 ```
 
 ## 致谢与许可
