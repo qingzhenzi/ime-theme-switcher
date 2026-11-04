@@ -1,6 +1,6 @@
 [package]
 name = "ime-theme-switcher"
-version = "0.3.0"
+version = "0.3.1"
 description = "切换 fcitx5 候选框主题、体检与初始化输入法环境的 Tauri 小工具"
 authors = ["qingzhenzi"]
 license = "MIT"

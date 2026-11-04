@@ -1,6 +1,6 @@
 # Maintainer: qingzhenzi
 pkgname=ime-theme-switcher
-pkgver=0.3.0
+pkgver=0.3.1
 pkgrel=1
 pkgdesc="切换 fcitx5 候选框主题的小工具（Tauri，含体检初始化）"
 arch=('x86_64')

@@ -484,28 +484,46 @@ fn health_checks() -> Vec<CheckItem> {
         fix_label: "换成带翻页按钮的主题".into(),
     });
 
-    // 4. 系统级输入法模块环境变量（XIM 漏字修复）
+    // 4. 全局输入法模块变量（会让 KDE 锁屏的 Qt greeter 反复弹候选窗）
     let env_map = read_etc_environment();
-    let gtk_ok = env_map
+    let gtk_global = env_map
         .get("GTK_IM_MODULE")
         .map(|v| v == "fcitx")
         .unwrap_or(false);
-    let qt_ok = env_map
+    let qt_global = env_map
         .get("QT_IM_MODULE")
         .map(|v| v == "fcitx")
         .unwrap_or(false);
+    let has_global = gtk_global || qt_global;
     items.push(CheckItem {
-        id: "ime-env".into(),
-        title: "XIM 漏字修复（/etc/environment）".into(),
-        level: if gtk_ok && qt_ok { "ok".into() } else { "warn".into() },
-        detail: if gtk_ok && qt_ok {
-            "GTK_IM_MODULE / QT_IM_MODULE 已设为 fcitx，Chromium/Electron 应用不会再走 XIM 漏字"
+        id: "global-ime-env".into(),
+        title: "锁屏输入法兼容性（/etc/environment）".into(),
+        level: if has_global { "warn".into() } else { "ok".into() },
+        detail: if has_global {
+            "检测到全局 GTK_IM_MODULE / QT_IM_MODULE=fcitx：KDE 锁屏的 Qt greeter 会加载 fcitx5-qt 模块，密码框里反复创建候选窗（锁屏时看起来像输入法疯狂切换）。建议移除全局变量，改用按应用加启动环境。"
                 .into()
         } else {
-            "缺少 GTK_IM_MODULE=fcitx / QT_IM_MODULE=fcitx，ONLYOFFICE、WorkBuddy 等 Chromium 应用可能偶发漏字（需要管理员权限，会对所有用户生效）".into()
+            "没有全局输入法模块变量；Chromium/Electron 应用通过启动项单独设置，不影响锁屏。".into()
         },
-        fixable: !(gtk_ok && qt_ok),
-        fix_label: "写入 /etc/environment（需授权）".into(),
+        fixable: has_global,
+        fix_label: "从 /etc/environment 移除（需授权）".into(),
+    });
+
+    // 5. 密码框输入法（锁屏候选窗刷屏的另一道保险）
+    let password_ime_on = fcitx_config_bool("AllowInputMethodForPassword");
+    items.push(CheckItem {
+        id: "password-ime".into(),
+        title: "密码框输入法".into(),
+        level: if password_ime_on { "warn".into() } else { "ok".into() },
+        detail: if password_ime_on {
+            "fcitx5 允许在密码框使用输入法（AllowInputMethodForPassword=True），锁屏输入时可能反复弹出候选窗。"
+                .into()
+        } else {
+            "密码框已禁用输入法（AllowInputMethodForPassword=False），锁屏输入不会被候选窗打断。"
+                .into()
+        },
+        fixable: password_ime_on,
+        fix_label: "关闭密码框输入法".into(),
     });
 
     // 5. Chromium/Electron 应用的启动环境（用户级）
@@ -646,40 +664,41 @@ fn ensure_cef_overrides_impl() -> Result<String, String> {
     Ok(msg)
 }
 
-fn fix_ime_env_impl() -> Result<String, String> {
+fn fcitx_config_bool(key: &str) -> bool {
+    let path = xdg_config_home().join("fcitx5/config");
+    fs::read_to_string(path)
+        .map(|text| {
+            text.lines().any(|line| {
+                let line = line.trim();
+                line == format!("{key}=True")
+            })
+        })
+        .unwrap_or(false)
+}
+
+/// 旧的“全局 GTK_IM_MODULE/QT_IM_MODULE”修复会让 KDE 锁屏的 Qt greeter 疯狂弹候选窗，
+/// 这里改为从 /etc/environment 中移除这两个变量（保留其他内容），
+/// Chromium/Electron 应用继续用各自的启动项覆盖。
+fn fix_global_ime_env_impl() -> Result<String, String> {
     let env_map = read_etc_environment();
-    let gtk_ok = env_map
+    let has_global = env_map
         .get("GTK_IM_MODULE")
         .map(|v| v == "fcitx")
-        .unwrap_or(false);
-    let qt_ok = env_map
-        .get("QT_IM_MODULE")
-        .map(|v| v == "fcitx")
-        .unwrap_or(false);
-    if gtk_ok && qt_ok {
-        return Ok("/etc/environment 里已经有 fcitx 的输入法模块设置".into());
+        .unwrap_or(false)
+        || env_map
+            .get("QT_IM_MODULE")
+            .map(|v| v == "fcitx")
+            .unwrap_or(false);
+    if !has_global {
+        return Ok("/etc/environment 里没有全局 GTK_IM_MODULE/QT_IM_MODULE，无需处理".into());
     }
-    if !Path::new("/usr/bin/pkexec").is_file() && !Path::new("/bin/pkexec").is_file() {
-        return Err("没有找到 pkexec，请手动把 GTK_IM_MODULE=fcitx、QT_IM_MODULE=fcitx 加进 /etc/environment".into());
-    }
-
     let script = r#"#!/bin/sh
 set -e
 ENV_FILE="/etc/environment"
-key_ok() { grep -q "^$1=fcitx" "$ENV_FILE" 2>/dev/null; }
-if ! key_ok GTK_IM_MODULE || ! key_ok QT_IM_MODULE; then
-cat >> "$ENV_FILE" <<'IMEEOF'
-
-#
-# ime-theme-switcher 添加：让 Chromium/Electron/CEF 应用（ONLYOFFICE、WorkBuddy、Steam 等）
-# 改用 fcitx5 的 GTK/Qt 输入法模块，避免走 XIM 时偶发漏字。
-# 对全机所有用户的新登录会话生效。
-GTK_IM_MODULE=fcitx
-QT_IM_MODULE=fcitx
-IMEEOF
-fi
+cp "$ENV_FILE" "$ENV_FILE.bak.ime-switcher"
+sed -i -E '/^(GTK_IM_MODULE|QT_IM_MODULE)=/d' "$ENV_FILE"
 "#;
-    let script_path = env::temp_dir().join("ime-theme-switcher-fix-env.sh");
+    let script_path = env::temp_dir().join("ime-theme-switcher-fix-global-env.sh");
     fs::write(&script_path, script).map_err(|e| format!("写入临时脚本失败：{e}"))?;
     let status = Command::new("pkexec")
         .arg("sh")
@@ -691,15 +710,41 @@ fi
         return Err("授权被取消或写入失败，未修改 /etc/environment".into());
     }
     let env_map = read_etc_environment();
-    let gtk_ok = env_map
-        .get("GTK_IM_MODULE")
-        .map(|v| v == "fcitx")
-        .unwrap_or(false);
-    if gtk_ok {
-        Ok("已写入 /etc/environment（GTK_IM_MODULE / QT_IM_MODULE=fcitx），所有用户下次登录生效".into())
+    let still = env_map.contains_key("GTK_IM_MODULE") || env_map.contains_key("QT_IM_MODULE");
+    if still {
+        Err("移除后校验失败，请手动检查 /etc/environment".into())
     } else {
-        Err("写入后校验失败，请手动检查 /etc/environment".into())
+        Ok("已从 /etc/environment 移除 GTK_IM_MODULE/QT_IM_MODULE（原文件备份为 /etc/environment.bak.ime-switcher）；重新登录后锁屏不再加载 fcitx 候选窗".into())
     }
+}
+
+fn fix_password_ime_impl() -> Result<String, String> {
+    let path = xdg_config_home().join("fcitx5/config");
+    let content = fs::read_to_string(&path).map_err(|e| format!("读取 fcitx5 配置失败：{e}"))?;
+    let mut replaced = 0;
+    let mut lines: Vec<String> = Vec::new();
+    for line in content.lines() {
+        let trimmed = line.trim_start();
+        if trimmed.starts_with("AllowInputMethodForPassword=") {
+            lines.push("AllowInputMethodForPassword=False".to_string());
+            replaced += 1;
+        } else if trimmed.starts_with("ShowPreeditForPassword=") {
+            lines.push("ShowPreeditForPassword=False".to_string());
+            replaced += 1;
+        } else {
+            lines.push(line.to_string());
+        }
+    }
+    if replaced == 0 {
+        return Err("fcitx5 配置里找不到密码框相关选项".into());
+    }
+    let mut out = lines.join("\n");
+    if !out.ends_with('\n') {
+        out.push('\n');
+    }
+    fs::write(&path, out).map_err(|e| format!("写入 fcitx5 配置失败：{e}"))?;
+    let _ = Command::new("fcitx5-remote").arg("-r").status();
+    Ok("已关闭密码框输入法（AllowInputMethodForPassword=False / ShowPreeditForPassword=False），立即生效".into())
 }
 
 fn fix_page_buttons_impl() -> Result<String, String> {
@@ -992,7 +1037,8 @@ fn run_fix_impl(id: &str) -> Result<String, String> {
         "fcitx5-running" => start_fcitx5_impl(),
         "theme-exists" => fix_theme_config_impl(),
         "page-buttons" => fix_page_buttons_impl(),
-        "ime-env" => fix_ime_env_impl(),
+        "global-ime-env" => fix_global_ime_env_impl(),
+        "password-ime" => fix_password_ime_impl(),
         "cef-launchers" => ensure_cef_overrides_impl(),
         "recommended-themes" => install_themes_impl(),
         other => Err(format!("未知的修复项：{other}")),
@@ -1003,9 +1049,10 @@ fn run_all_fixes_impl() -> Result<String, String> {
     let order = [
         "recommended-themes",
         "cef-launchers",
+        "global-ime-env",
+        "password-ime",
         "theme-exists",
         "page-buttons",
-        "ime-env",
         "fcitx5-running",
     ];
     let current_ids: Vec<String> = health_checks().into_iter().map(|item| item.id).collect();

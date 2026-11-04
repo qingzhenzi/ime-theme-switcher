@@ -32,7 +32,8 @@ Chromium/Electron 应用走错输入法模块等）做成一键修复。
 | fcitx5 是否在运行 | 启动 `fcitx5 -d` |
 | 当前主题是否存在 | 回退到可用的默认主题 |
 | 当前主题有没有 ◀ / ▶ 翻页按钮 | 换成带翻页按钮的主题（如初音未来） |
-| `/etc/environment` 是否有 `GTK_IM_MODULE=fcitx`、`QT_IM_MODULE=fcitx` | 通过 `pkexec` 写入（需管理员授权，全机所有用户生效） |
+| `/etc/environment` 里是否有全局 `GTK_IM_MODULE`/`QT_IM_MODULE`（会让 KDE 锁屏反复弹候选窗） | 通过 `pkexec` 从 `/etc/environment` 移除，改用按应用启动项 |
+| 密码框是否允许输入法（`AllowInputMethodForPassword`） | 关闭密码框输入法，锁屏输入不再弹候选窗 |
 | ONLYOFFICE / WorkBuddy / Steam 等 Chromium 应用是否加了输入法环境 | 生成用户级 `.desktop` 覆盖（保留原文件内容，仅在 `Exec=` 前加环境变量） |
 | 推荐主题是否齐全（初音未来 ×2、PT cute light ×4、Mellow ×2） | 从 GitHub 下载安装；其中「初音未来·暗色」直接内置在程序里，离线也能装 |
 
